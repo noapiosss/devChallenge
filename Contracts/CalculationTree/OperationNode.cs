@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 
 namespace Contracts.CalculationTree
@@ -18,26 +20,56 @@ namespace Contracts.CalculationTree
 
         public override string Evaluate()
         {
-            float leftValue = float.Parse(_left.Evaluate());
-            float rightValue = float.Parse(_right.Evaluate());
+            string leftValue = _left.Evaluate();
+            string rightValue = _right.Evaluate();
 
             switch (_operation)
             {
                 case '+':
-                    return (leftValue + rightValue).ToString();
+                    return (float.Parse(leftValue) + float.Parse(rightValue)).ToString();
                 case '-':
-                    return (leftValue - rightValue).ToString();
+                    return (float.Parse(leftValue) - float.Parse(rightValue)).ToString();
                 case '*':
-                    return (leftValue * rightValue).ToString();
+                    return (float.Parse(leftValue) * float.Parse(rightValue)).ToString();
                 case '/':
-                    if (rightValue == 0)
+                    if (rightValue == "0")
                     {
                         throw new DivideByZeroException("Division by zero.");
                     }
-                    return (leftValue / rightValue).ToString();;
+                    return (float.Parse(leftValue) / float.Parse(rightValue)).ToString();;
                 default:
                     throw new InvalidOperationException("Invalid operation.");
             }
+        }
+
+        public override ICollection<string> GetNodeVariables()
+        {
+            List<string> nodeValues = new();
+
+            if (_left is not null)
+            {
+                nodeValues.AddRange(_left.GetNodeVariables());
+            }
+            if (_right is not null)
+            { 
+                nodeValues.AddRange(_right.GetNodeVariables());
+            }
+
+            return nodeValues;
+        }
+
+        public override Node ReplaceVariable(string variableName, Node node)
+        {
+            if (_left is not null)
+            {
+                _left = _left.ReplaceVariable(variableName, node);
+            }
+            if (_right is not null)
+            {             
+                _right = _right.ReplaceVariable(variableName, node);
+            }
+
+            return this;
         }
     }
 }

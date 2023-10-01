@@ -16,7 +16,7 @@ namespace Api.Controllers
     public class FiltersController : BaseController
     {
         private readonly IMediator _mediator;
-        private readonly char[] _invalidCellIdSigns = new char[] {' ', '+','-','/','*','=','(',')'};
+        private readonly char[] _invalidCellIdSigns = new char[] {' ', '+','-','/','*','=','(',')', ','};
 
         public FiltersController(IMediator mediator,
             ILogger<FiltersController> logger) : base(logger)
@@ -154,6 +154,12 @@ namespace Api.Controllers
 
         private bool IsValidCellId(string cellId, out string message)
         {
+            if (char.IsDigit(cellId[0]))
+            {
+                message = $"CellId cannot starts with a number";
+                return false;
+            }
+
             foreach (char sign in _invalidCellIdSigns)
             {
                 if (cellId.Contains(sign))

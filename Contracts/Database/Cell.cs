@@ -19,6 +19,10 @@ namespace Contracts.Database
         [Column("is_expression")]
         public bool IsExpression { get; set; }
 
+        public ICollection<CellDependency> DependByCells { get; set; }
+        public ICollection<CellDependency> DependedCells { get; set; }
+
+
         public Cell(string sheetId, string cellId, string value)
         {            
             SheetId = sheetId;

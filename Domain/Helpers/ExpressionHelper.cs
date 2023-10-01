@@ -43,16 +43,7 @@ namespace Domain.Helpers
                 expression = sb.ToString();
             }
 
-            if (expression.StartsWith("+"))
-            {
-                expression = expression[1..];
-            }
-            else if (expression.StartsWith("-"))
-            {
-                expression = "0" + expression;
-            }
-
-            return expression.Replace("(-", "(0-").Replace("(+", "(").Replace("*+", "*");
+            return expression;
         }
     }
 }

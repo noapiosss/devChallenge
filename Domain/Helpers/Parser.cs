@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Contracts.CalculationTree;
 using Contracts.Database;
 
@@ -7,111 +8,99 @@ namespace Domain.Helpers
 {
     internal class Parser
     {
-        public Dictionary<string, Cell> Cells;
-        private readonly Dictionary<string, int> _indexes;
-        private readonly HashSet<string> _currentlyEvaluating;
+        private string _expression;
+        private int _index;
 
-        public Parser(Dictionary<string, Cell> cells)
+        public Parser()
         {
-            Cells = cells;
-            _indexes = new();
-            _currentlyEvaluating = new();
+
         }
 
-        public Node Parse(string cellId)
+        public Node Parse(string expression)
         {
-            if (!Cells.ContainsKey(cellId))
-            {
-                throw new NullReferenceException("There is no such variable.");
-            }
-            
-            if (!Cells[cellId].IsExpression)
-            {
-                return new ValueNode(Cells[cellId].Value);
-            }
-
-            _indexes[cellId] = 0;
-
-            if (!_currentlyEvaluating.Add(cellId))
-            {
-                throw new InvalidCastException("Self linking."); 
-            }
-
-            Cells[cellId].Value = Cells[cellId].Value.PrepareExpression();
-            Node result = ParseExpression(cellId);
-            _currentlyEvaluating.Remove(cellId);
-
-            return result;
+            _expression = expression;
+            _index = 0;
+            return ParseExpression();
         }
 
-        private Node ParseExpression(string cellId)
+        private Node ParseExpression()
         {
-            Node left = ParseTerm(cellId);
-            
-            while (_indexes[cellId] < Cells[cellId].Value.Length &&
-                (Cells[cellId].Value[_indexes[cellId]] == '+' || Cells[cellId].Value[_indexes[cellId]] == '-'))
+            bool isNegative = false;
+            while (_index < _expression.Length && _expression[_index] == '-')
             {
-                char operation = Cells[cellId].Value[_indexes[cellId]++];
-                Node right = ParseTerm(cellId);
+                isNegative = !isNegative;
+                _index++;
+            }
+
+            Node left = ParseTerm();
+
+            if (isNegative)
+            {
+                left = new OperationNode(new ValueNode("0"), left, '-');
+            }
+            
+            while (_index < _expression.Length &&
+                (_expression[_index] == '+' || _expression[_index] == '-'))
+            {
+                char operation = _expression[_index++];
+                Node right = ParseTerm();
                 left = new OperationNode(left, right, operation);
             }
 
-            return new ValueNode(left.Evaluate());
+            return left;
         }
 
-        private Node ParseTerm(string cellId)
+        private Node ParseTerm()
         {
-            Node left = ParseFactor(cellId);
+            Node left = ParseFactor();
 
-            while (_indexes[cellId] < Cells[cellId].Value.Length &&
-                (Cells[cellId].Value[_indexes[cellId]] == '*' || Cells[cellId].Value[_indexes[cellId]] == '/'))
+            while (_index < _expression.Length &&
+                (_expression[_index] == '*' || _expression[_index] == '/'))
             {
-                char operation = Cells[cellId].Value[_indexes[cellId]++];
-                Node right = ParseFactor(cellId);
+                char operation = _expression[_index++];
+                Node right = ParseFactor();
                 left = new OperationNode(left, right, operation);
             }
 
-            return new ValueNode(left.Evaluate());
+            return left;
         }
 
-        private Node ParseFactor(string cellId)
+        private Node ParseFactor()
         {
-            if (_indexes[cellId] < Cells[cellId].Value.Length && Cells[cellId].Value[_indexes[cellId]] == '(')
+            if (_index < _expression.Length && _expression[_index] == '(')
             {
-                _indexes[cellId]++;
-                Node node = ParseExpression(cellId);
+                _index++;
+                Node node = ParseExpression();
                 
-                if (_indexes[cellId] >= Cells[cellId].Value.Length || Cells[cellId].Value[_indexes[cellId]] != ')')
+                if (_index >= _expression.Length || _expression[_index] != ')')
                 {
                     throw new InvalidOperationException("Mismatched parentheses.");
                 }
 
-                _indexes[cellId]++;
+                _index++;
                 return node;
             }
-            else if (char.IsDigit(Cells[cellId].Value[_indexes[cellId]]) || char.IsLetter(Cells[cellId].Value[_indexes[cellId]]))
+
+            if (_expression[_index] == '+' || _expression[_index] == '-')
             {
-                int start_index = _indexes[cellId];
-                while (_indexes[cellId] < Cells[cellId].Value.Length &&
-                    Cells[cellId].Value[_indexes[cellId]] != '+' &&
-                    Cells[cellId].Value[_indexes[cellId]] != '-' &&
-                    Cells[cellId].Value[_indexes[cellId]] != '*' &&
-                    Cells[cellId].Value[_indexes[cellId]] != '/' &&
-                    Cells[cellId].Value[_indexes[cellId]] != ')')
+                _index++;
+                return new OperationNode(new ValueNode("0"), ParseFactor(), _expression[_index]);
+            }
+
+            else if (char.IsDigit(_expression[_index]) || char.IsLetter(_expression[_index]))
+            {
+                int start_index = _index;
+                while (_index < _expression.Length &&
+                    _expression[_index] != '+' &&
+                    _expression[_index] != '-' &&
+                    _expression[_index] != '*' &&
+                    _expression[_index] != '/' &&
+                    _expression[_index] != ')')
                 {
-                    _indexes[cellId]++;
+                    _index++;
                 }
 
-                string numberStr = Cells[cellId].Value[start_index.._indexes[cellId]];
-
-                foreach (char c in numberStr)
-                {
-                    if (!char.IsDigit(c))
-                    {
-                        return Parse(numberStr);
-                    }
-                }
-
+                string numberStr = _expression[start_index.._index];
                 return new ValueNode(numberStr);
             }
             else
