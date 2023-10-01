@@ -185,8 +185,6 @@ namespace Domain.Base
                 .Where(c => c.SheetId == sheetId)
                 .ToDictionaryAsync(c => c.CellId, cancellationToken);
 
-            cells = new Dictionary<string, Cell>(cells.OrderBy(c => c.Key.Length));
-
             Dictionary<string, Node> cellNodes = new();
 
             List<CellDTO> cellDTOs = new();
