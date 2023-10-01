@@ -35,16 +35,19 @@ namespace Domain.Commands
             _dbContext.Cells.Add(new(request.SheetId, "var0", "0"));
 
             List<Cell> cells = new(request.Size);
+            List<CellDependency> cellDependencies = new(request.Size);
             for (int i = 1; i <= request.Size; ++i)
             {
                 cells.Add(new(request.SheetId, $"var{i}", $"=var{i-1}+1"));
+                cellDependencies.Add(new()
+                {
+                    SheetId = request.SheetId,
+                    DependedCellId = $"var{i}",
+                    DependedByCellId = $"var{i-1}"
+                });
             }
-            _dbContext.AddRange(cells);
-            
-            // for (int i = 0; i <= 16000; ++i)
-            // {
-            //      _dbContext.Cells.Add(new(request.SheetId, $"var{i}", "{i}"));
-            // }
+            _dbContext.Cells.AddRange(cells);
+            _dbContext.CellDependencies.AddRange(cellDependencies);
 
             await _dbContext.SaveChangesAsync(cancellationToken);
 

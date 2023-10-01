@@ -33,13 +33,15 @@ namespace Domain.Base
             {
                 Node newCellNode = _parser.Parse(newCell.Value);
                 ICollection<string> newCellNodeVariables = newCellNode.GetNodeVariables();
-                
-                Dictionary<string, Cell> cells = await _dbContext.Cells
-                    .Where(c => newCellNodeVariables.Contains(c.CellId))
-                    .SelectMany(c => c.DependByCells)
-                    .Select(c => c.DependedByCell)
-                    .Concat(_dbContext.Cells.Where(c => newCellNodeVariables.Contains(c.CellId)))
-                    .ToDictionaryAsync(c => c.CellId, cancellationToken);
+
+                Dictionary<string, Cell> dependedByCells = newCellNodeVariables.Count == 0 ?
+                    new() :
+                    await _dbContext
+                        .GetAllDependency(newCell.SheetId, newCellNodeVariables)
+                        .Select(cd => cd.DependedByCell)
+                        .Concat(_dbContext.Cells.Where(c => c.SheetId == newCell.SheetId && newCellNodeVariables.Contains(c.CellId)))
+                        .Distinct()
+                        .ToDictionaryAsync(c => c.CellId, cancellationToken);
 
                 Dictionary<string, Node> cellNodes = new();
                 ICollection<string> variables = newCellNode.GetNodeVariables();
@@ -53,7 +55,7 @@ namespace Domain.Base
                         }
                         else
                         {
-                            Node newNode = _parser.Parse(cells[variable].Value);
+                            Node newNode = _parser.Parse(dependedByCells[variable].Value);
                             cellNodes.Add(variable, newNode);
                             newCellNode = newCellNode.ReplaceVariable(variable, newNode);                        
                         }
@@ -62,7 +64,7 @@ namespace Domain.Base
                     }
                 }
 
-                newCell.DependByCells = cells
+                newCell.DependByCells = dependedByCells
                     .Where(c => newCellNodeVariables.Contains(c.Key))
                     .Select(c => c.Value)
                     .Select(c => new CellDependency()
@@ -81,13 +83,10 @@ namespace Domain.Base
                 }
                 else
                 {
-                    Dictionary<string, Cell> dependedCells = await _dbContext.Cells
-                        .Where(c => c.Equals(newCell))
-                        .Include(c => c.DependedCells)
-                        .Include(c => c.DependByCells)
+                    Dictionary<string, Cell> dependedCells = await _dbContext
+                        .GetAllDependedBy(newCell.SheetId, newCell.CellId)
+                        .Select(cd => cd.DependedCell)
                         .ToDictionaryAsync(c => c.CellId, cancellationToken);
-                    
-                    dependedCells.Remove(newCell.CellId);
 
                     foreach(KeyValuePair<string, Cell> dependedCell in dependedCells)
                     {
@@ -104,7 +103,7 @@ namespace Domain.Base
                                 }
                                 else
                                 {
-                                    Node newNode = _parser.Parse(cells[variable].Value);
+                                    Node newNode = _parser.Parse(dependedByCells[variable].Value);
                                     cellNodes.Add(variable, newNode);
                                     dependedCellNode = dependedCellNode.ReplaceVariable(variable, newNode);                        
                                 }                    
@@ -142,10 +141,10 @@ namespace Domain.Base
 
         protected async Task<CellDTO> GetCellDTOAsync(Cell cell, CancellationToken cancellationToken)
         {
-            Dictionary<string, Cell> cells = await _dbContext.Cells
-                .Where(c => c.Equals(cell))
-                .Include(c => c.DependByCells)
-                .ToDictionaryAsync(c => c.CellId, cancellationToken);
+            Dictionary<string, Cell> dependedByCells = await _dbContext
+                    .GetAllDependency(cell.SheetId, new List<string>() {cell.CellId})
+                    .Select(cd => cd.DependedByCell)
+                    .ToDictionaryAsync(c => c.CellId, cancellationToken);
 
             Dictionary<string, Node> cellNodes = new();
 
@@ -162,17 +161,19 @@ namespace Domain.Base
                     }
                     else
                     {
-                        Node newNode = _parser.Parse(cells[variable].Value);
+                        Node newNode = _parser.Parse(dependedByCells[variable].Value);
                         cellNodes.Add(variable, newNode);
                         cellNode = cellNode.ReplaceVariable(variable, newNode);                        
-                    }                    
+                    }
                 }
+
+                variables = cellNode.GetNodeVariables();
             }
 
             return new() 
             {
                 Name = cell.CellId,
-                Value = cell.Value,
+                Value = $"={cell.Value}",
                 Result = cellNode.Evaluate(),
                 IsValid = true
             };
@@ -180,7 +181,11 @@ namespace Domain.Base
 
         protected async Task<List<CellDTO>> GetSheetAsync(string sheetId, CancellationToken cancellationToken)
         {
-            Dictionary<string, Cell> cells = await _dbContext.Cells.ToDictionaryAsync(c => c.CellId, cancellationToken);
+            Dictionary<string, Cell> cells = await _dbContext.Cells
+                .Where(c => c.SheetId == sheetId)
+                .ToDictionaryAsync(c => c.CellId, cancellationToken);
+
+            cells = new Dictionary<string, Cell>(cells.OrderBy(c => c.Key.Length));
 
             Dictionary<string, Node> cellNodes = new();
 
@@ -188,6 +193,18 @@ namespace Domain.Base
 
             foreach(KeyValuePair<string, Cell> cell in cells)
             {
+                if (!cell.Value.IsExpression)
+                {
+                    cellDTOs.Add(new()
+                    {
+                        Name = cell.Value.CellId,
+                        Value = cell.Value.Value,
+                        Result = cell.Value.Value,
+                        IsValid = true
+                    });
+                    continue;
+                }
+
                 Node cellNode = _parser.Parse(cell.Value.Value);
 
                 ICollection<string> variables = cellNode.GetNodeVariables();
@@ -206,12 +223,14 @@ namespace Domain.Base
                             cellNode = cellNode.ReplaceVariable(variable, newNode);                        
                         }                    
                     }
+
+                    variables = cellNode.GetNodeVariables();
                 }
 
                 cellDTOs.Add(new()
                 {
                     Name = cell.Value.CellId,
-                    Value = cell.Value.Value,
+                    Value = $"={cell.Value.Value}",
                     Result = cellNode.Evaluate(),
                     IsValid = true
                 });

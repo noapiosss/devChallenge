@@ -43,6 +43,21 @@ namespace Domain.Commands
                 };
             }
 
+            if (!cell.IsExpression)
+            {
+                return new()
+                {
+                    IsFound = true,
+                    CellDTO = new()
+                    {
+                        Name = cell.CellId,
+                        Value = cell.Value,
+                        Result = cell.Value,
+                        IsValid = true
+                    }
+                };
+            }
+
             return new()
             {
                 IsFound = true,

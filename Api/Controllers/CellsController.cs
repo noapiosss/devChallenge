@@ -143,7 +143,7 @@ namespace Api.Controllers
                 CreateRecursiveTableCommand command = new()
                 {
                     SheetId = sheetId,
-                    Size = 128
+                    Size = 16000
                 };
                 CreateRecursiveTableCommandResult result = await _mediator.Send(command, cancellationToken);
 
