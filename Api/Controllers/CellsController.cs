@@ -54,7 +54,7 @@ namespace Api.Controllers
                     return UnprocessableEntity(response);
                 }
 
-                return Ok(response);
+                return Created("", response);
 
             }, cancellationToken);
         }

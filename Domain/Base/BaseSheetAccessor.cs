@@ -70,8 +70,8 @@ namespace Domain.Base
                                     newNode = new ValueNode(dependedByCells[variable].Value);
                                     cellNodes.Add(variable, newNode);
                                     newCellNode = newCellNode.ReplaceVariable(variable, newNode);
-                                    variables = new List<string>();
-                                    break;
+                                    variables = variables.Except(new List<string>() {variable}).ToList();
+                                    continue;
                                 }
                                     
                                 newNode = _parser.Parse(dependedByCells[variable].Value);
