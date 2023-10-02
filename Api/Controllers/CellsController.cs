@@ -135,23 +135,6 @@ namespace Api.Controllers
             }, cancellationToken);
         }
 
-        [HttpPost("/api/v1/{sheetId}")]
-        public Task<IActionResult> UpsertRecursive([FromRoute] string sheetId, CancellationToken cancellationToken)
-        {
-            return SafeExecute(async () =>
-            {
-                CreateRecursiveTableCommand command = new()
-                {
-                    SheetId = sheetId,
-                    Size = 16000
-                };
-                CreateRecursiveTableCommandResult result = await _mediator.Send(command, cancellationToken);
-
-                return Ok(result);
-
-            }, cancellationToken);
-        }
-
         private bool IsValidCellId(string cellId, out string message)
         {
             if (char.IsDigit(cellId[0]))
