@@ -51,40 +51,36 @@ namespace Domain.Base
                             .ToDictionaryAsync(c => c.CellId, cancellationToken);
 
                     ICollection<string> variables = newCellNode.GetNodeVariables();
-
-                    if (newCellNode is ValueNode && variables.Count == 1) // resursive to string value
+                    while (variables.Count != 0)
                     {
-                        while (dependedByCells.ContainsKey(variables.First()) && _parser.Parse(dependedByCells[variables.First()].Value) is ValueNode)
-                        {   
-                            variables = new List<string>() {dependedByCells[variables.First()].Value};
-                        }
-
-                        
-                        newCellResult = variables.First();
-                    }
-                    else
-                    {
-                        while (variables.Count != 0)
+                        foreach(string variable in variables)
                         {
-                            foreach(string variable in variables)
+                            if (cellNodes.ContainsKey(variable))
                             {
-                                if (cellNodes.ContainsKey(variable))
+                                newCellNode = newCellNode.ReplaceVariable(variable, cellNodes[variable]);
+                            }
+                            else
+                            {
+                                Node newNode;
+                                if (!dependedByCells[variable].IsExpression)
                                 {
-                                    newCellNode = newCellNode.ReplaceVariable(variable, cellNodes[variable]);
-                                }
-                                else
-                                {
-                                    Node newNode = _parser.Parse(dependedByCells[variable].Value);
+                                    newNode = new ValueNode(dependedByCells[variable].Value);
                                     cellNodes.Add(variable, newNode);
                                     newCellNode = newCellNode.ReplaceVariable(variable, newNode);
+                                    variables = new List<string>();
+                                    break;
                                 }
-
-                                variables = newCellNode.GetNodeVariables();
+                                    
+                                newNode = _parser.Parse(dependedByCells[variable].Value);
+                                cellNodes.Add(variable, newNode);
+                                newCellNode = newCellNode.ReplaceVariable(variable, newNode);                                
                             }
-                        }
 
-                        newCellResult = newCellNode.Evaluate();
+                            variables = newCellNode.GetNodeVariables();
+                        }
                     }
+
+                    newCellResult = newCellNode.Evaluate();
                     
                     newCell.DependByCells = dependedByCells
                         .Where(c => newCellNodeVariables.Contains(c.Key))
@@ -97,57 +93,49 @@ namespace Domain.Base
                             })
                         .ToList();
 
-                    cellNodes.Add(newCell.CellId, newCellNode);
-
-                    foreach(KeyValuePair<string, Cell> dependedCell in dependedCells)
-                    {
-                        Node dependedCellNode = _parser.Parse(dependedCell.Value.Value);
-
-                        ICollection<string> dependedCellVariables = dependedCellNode.GetNodeVariables();
-                        while (dependedCellVariables.Count != 0)
-                        {
-                            foreach(string variable in dependedCellVariables)
-                            {
-                                if (cellNodes.ContainsKey(variable))
-                                {
-                                    dependedCellNode = dependedCellNode.ReplaceVariable(variable, cellNodes[variable]);
-                                }
-                                else
-                                {
-                                    Node newNode = _parser.Parse(dependedCells[variable].Value);
-                                    cellNodes.Add(variable, newNode);
-                                    dependedCellNode = dependedCellNode.ReplaceVariable(variable, newNode);                        
-                                }                    
-                            }
-
-                            dependedCellVariables = dependedCellNode.GetNodeVariables();
-                        }
-
-                        _ = dependedCellNode.Evaluate();
-                    }
+                    cellNodes.Add(newCell.CellId, newCellNode);                    
                 }
                 else
                 {
                     newCellResult = newCell.Value;
                     newCell.DependByCells = new List<CellDependency>();
+                }
 
-                    foreach(KeyValuePair<string, Cell> dependedCell in dependedCells)
+                foreach(KeyValuePair<string, Cell> dependedCell in dependedCells)
+                {
+                    Node dependedCellNode = _parser.Parse(dependedCell.Value.Value);
+
+                    ICollection<string> dependedCellVariables = dependedCellNode.GetNodeVariables();
+                    while (dependedCellVariables.Count != 0)
                     {
-                        Node dependedCellNode = _parser.Parse(dependedCell.Value.Value);
-                        ICollection<string> variables = dependedCellNode.GetNodeVariables();
-
-                        if (dependedCellNode is ValueNode && variables.Count == 1) // resursive to string value
+                        foreach(string variable in dependedCellVariables)
                         {
-                            while (dependedCells.ContainsKey(variables.First()) && _parser.Parse(dependedCells[variables.First()].Value) is ValueNode)
-                            {   
-                                variables = new List<string>() {dependedCells[variables.First()].Value};
+                            if (cellNodes.ContainsKey(variable))
+                            {
+                                dependedCellNode = dependedCellNode.ReplaceVariable(variable, cellNodes[variable]);
+                            }
+                            else
+                            {
+                                Node newNode;
+                                if (!dependedCells[variable].IsExpression)
+                                {
+                                    newNode = new ValueNode(dependedCells[variable].Value);
+                                    cellNodes.Add(variable, newNode);
+                                    newCellNode = newCellNode.ReplaceVariable(variable, newNode);
+                                    dependedCellVariables = new List<string>();
+                                    break;
+                                }
+
+                                newNode = _parser.Parse(dependedCells[variable].Value);
+                                cellNodes.Add(variable, newNode);
+                                dependedCellNode = dependedCellNode.ReplaceVariable(variable, newNode);
                             }
                         }
-                        else
-                        {
-                            throw new InvalidOperationException("Adding string to number");
-                        }
+
+                        dependedCellVariables = dependedCellNode.GetNodeVariables();
                     }
+
+                    _ = dependedCellNode.Evaluate();
                 }
 
                 if (!await _dbContext.Cells.AnyAsync(c => c.Equals(newCell), cancellationToken))
@@ -211,26 +199,22 @@ namespace Domain.Base
                     }
                     else
                     {
-                        if (dependedByCells.ContainsKey(variable))
+                        Node newNode;
+                        if (!dependedByCells[variable].IsExpression)
                         {
-                            Node newNode = _parser.Parse(dependedByCells[variable].Value);
-                            cellNodes.Add(variable, newNode);
-                            cellNode = cellNode.ReplaceVariable(variable, newNode);                        
+                            newNode = new ValueNode(dependedByCells[variable].Value);
+                            cellNode = cellNode.ReplaceVariable(variable, newNode);
+                            variables = new List<string>();
+                            break;
                         }
-                        else if (cellNode is ValueNode)
-                        {
-                            return new() 
-                            {
-                                Name = cell.CellId,
-                                Value = $"={cell.Value}",
-                                Result = dependedByCells.First(c => !c.Value.IsExpression).Value.Value,
-                                IsValid = true
-                            };
-                        }
+                            
+                        newNode = _parser.Parse(dependedByCells[variable].Value);
+                        cellNodes.Add(variable, newNode);
+                        cellNode = cellNode.ReplaceVariable(variable, newNode);                                
                     }
-                }
 
-                variables = cellNode.GetNodeVariables();
+                    variables = cellNode.GetNodeVariables();
+                }
             }
 
             return new() 
@@ -279,13 +263,22 @@ namespace Domain.Base
                         }
                         else
                         {
-                            Node newNode = _parser.Parse(cells[variable].Value);
+                            Node newNode;
+                            if (!cells[variable].IsExpression)
+                            {
+                                newNode = new ValueNode(cells[variable].Value);
+                                cellNode = cellNode.ReplaceVariable(variable, newNode);
+                                variables = variables.Except(new List<string>() {variable}).ToList();
+                                continue;
+                            }
+                                
+                            newNode = _parser.Parse(cells[variable].Value);
                             cellNodes.Add(variable, newNode);
-                            cellNode = cellNode.ReplaceVariable(variable, newNode);                        
-                        }                    
-                    }
+                            cellNode = cellNode.ReplaceVariable(variable, newNode);                                
+                        }
 
-                    variables = cellNode.GetNodeVariables();
+                        variables = cellNode.GetNodeVariables();
+                    }
                 }
 
                 cellDTOs.Add(new()
