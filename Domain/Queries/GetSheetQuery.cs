@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Contracts.Database;
 using Contracts.DTO;
 using Domain.Base;
 using Domain.Database;
+using Domain.Helpers.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -13,7 +13,7 @@ namespace Domain.Commands
 {
     public class GetSheetQuery : IRequest<GetSheetQueryResult>
     {
-        public string SheetId { get; init; }
+        public string SheetId { get; set; }
     }
 
     public class GetSheetQueryResult
@@ -25,13 +25,16 @@ namespace Domain.Commands
     internal class GetSheetQueryHandler : BaseSheetAccessor<GetSheetQuery, GetSheetQueryResult>
     {
         public GetSheetQueryHandler(SheetsDbContext dbContext,
-            ILogger<GetSheetQueryHandler> logger) : base(dbContext, logger)
+            IParser parser,
+            ILogger<GetSheetQueryHandler> logger) : base(dbContext, parser, logger)
         {
 
         }
 
         protected override async Task<GetSheetQueryResult> HandleInternal(GetSheetQuery request, CancellationToken cancellationToken)
         {
+            request.SheetId = request.SheetId.ToLower();
+
             if (!await _dbContext.Cells.AnyAsync(c => c.SheetId == request.SheetId, cancellationToken))
             {
                 return new()

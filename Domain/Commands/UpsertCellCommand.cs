@@ -4,8 +4,8 @@ using Contracts.Database;
 using Contracts.DTO;
 using Domain.Base;
 using Domain.Database;
+using Domain.Helpers.Interfaces;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Domain.Commands
@@ -23,13 +23,17 @@ namespace Domain.Commands
     internal class UpsertCellCommandHandler : BaseSheetAccessor<UpsertCellCommand, UpsertCellCommandResult>
     {
         public UpsertCellCommandHandler(SheetsDbContext dbContext,
-            ILogger<UpsertCellCommandHandler> logger) : base(dbContext, logger)
+            IParser parser,
+            ILogger<UpsertCellCommandHandler> logger) : base(dbContext, parser, logger)
         {
 
         }
 
         protected override async Task<UpsertCellCommandResult> HandleInternal(UpsertCellCommand request, CancellationToken cancellationToken)
         {
+            request.Cell.SheetId = request.Cell.SheetId.ToLower();
+            request.Cell.CellId = request.Cell.CellId.ToLower();
+
             return new()
             {
                 CellDTO = await TryUpsertValueAsync(request.Cell, cancellationToken)

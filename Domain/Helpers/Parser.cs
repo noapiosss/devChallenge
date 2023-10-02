@@ -1,12 +1,10 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using Contracts.CalculationTree;
-using Contracts.Database;
+using Domain.Helpers.Interfaces;
 
 namespace Domain.Helpers
 {
-    internal class Parser
+    internal class Parser : IParser
     {
         private string _expression;
         private int _index;
@@ -18,7 +16,7 @@ namespace Domain.Helpers
 
         public Node Parse(string expression)
         {
-            _expression = expression;
+            _expression = expression.PrepareExpression();
             _index = 0;
             return ParseExpression();
         }
@@ -44,7 +42,7 @@ namespace Domain.Helpers
             {
                 char operation = _expression[_index++];
                 Node right = ParseTerm();
-                left = new OperationNode(left, right, operation);
+                left = new OperationNode(new ValueNode(left.Evaluate()), right, operation);
             }
 
             return left;

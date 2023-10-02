@@ -2,11 +2,10 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Contracts.Database;
-using Contracts.DTO;
 using Domain.Base;
 using Domain.Database;
+using Domain.Helpers.Interfaces;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Domain.Commands
@@ -25,7 +24,8 @@ namespace Domain.Commands
     internal class CreateRecursiveTableCommandHandler : BaseSheetAccessor<CreateRecursiveTableCommand, CreateRecursiveTableCommandResult>
     {
         public CreateRecursiveTableCommandHandler(SheetsDbContext dbContext,
-            ILogger<CreateRecursiveTableCommandHandler> logger) : base(dbContext, logger)
+            IParser parser,
+            ILogger<CreateRecursiveTableCommandHandler> logger) : base(dbContext, parser, logger)
         {
 
         }

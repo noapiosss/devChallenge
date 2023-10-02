@@ -43,7 +43,7 @@ namespace Domain.Helpers
                 expression = sb.ToString();
             }
 
-            return expression;
+            return expression.ToLower();
         }
     }
 }

@@ -4,6 +4,7 @@ using Contracts.Database;
 using Contracts.DTO;
 using Domain.Base;
 using Domain.Database;
+using Domain.Helpers.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -25,14 +26,16 @@ namespace Domain.Commands
     internal class GetCellQueryHandler : BaseSheetAccessor<GetCellQuery, GetCellQueryResult>
     {
         public GetCellQueryHandler(SheetsDbContext dbContext,
-            ILogger<GetCellQueryHandler> logger) : base(dbContext, logger)
+            IParser parser,
+            ILogger<GetCellQueryHandler> logger) : base(dbContext, parser, logger)
         {
 
         }
 
         protected override async Task<GetCellQueryResult> HandleInternal(GetCellQuery request, CancellationToken cancellationToken)
         {
-            Cell cell = await _dbContext.Cells.FirstOrDefaultAsync(c => c.SheetId == request.SheetId && c.CellId == request.CellId, cancellationToken);
+            Cell cell = await _dbContext.Cells
+                .FirstOrDefaultAsync(c => c.SheetId == request.SheetId.ToLower() && c.CellId == request.CellId.ToLower(), cancellationToken);
 
             if (cell is null)
             {
