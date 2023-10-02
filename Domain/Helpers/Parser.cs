@@ -23,19 +23,7 @@ namespace Domain.Helpers
 
         private Node ParseExpression()
         {
-            bool isNegative = false;
-            while (_index < _expression.Length && _expression[_index] == '-')
-            {
-                isNegative = !isNegative;
-                _index++;
-            }
-
             Node left = ParseTerm();
-
-            if (isNegative)
-            {
-                left = new OperationNode(new ValueNode("0"), left, '-');
-            }
             
             while (_index < _expression.Length &&
                 (_expression[_index] == '+' || _expression[_index] == '-'))
@@ -88,8 +76,9 @@ namespace Domain.Helpers
 
             if (_expression[_index] == '+' || _expression[_index] == '-')
             {
-                _index++;
-                return new OperationNode(new ValueNode("0"), ParseFactor(), _expression[_index]);
+                char opration = _expression[_index++];
+                Node right = ParseFactor();
+                return new OperationNode(new ValueNode("0"), right, opration);
             }
 
             else if (char.IsDigit(_expression[_index]) || char.IsLetter(_expression[_index]))
