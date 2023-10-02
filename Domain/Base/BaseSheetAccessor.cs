@@ -69,8 +69,9 @@ namespace Domain.Base
                     .Select(c => c.Value)
                     .Select(c => new CellDependency()
                         {
-                            DependedByCell = c,
-                            DependedCell = newCell
+                            SheetId = newCell.SheetId, 
+                            DependedByCellId = c.CellId,
+                            DependedCellId = newCell.CellId
                         })
                     .ToList();
 
@@ -88,14 +89,16 @@ namespace Domain.Base
                         .Select(cd => cd.DependedCell)
                         .ToDictionaryAsync(c => c.CellId, cancellationToken);
 
+                    cellNodes.Add(newCell.CellId, newCellNode);
+
                     foreach(KeyValuePair<string, Cell> dependedCell in dependedCells)
                     {
                         Node dependedCellNode = _parser.Parse(dependedCell.Value.Value);
 
-                        ICollection<string> dependedCellVariable = dependedCellNode.GetNodeVariables();
-                        while (dependedCellVariable.Count != 0)
+                        ICollection<string> dependedCellVariables = dependedCellNode.GetNodeVariables();
+                        while (dependedCellVariables.Count != 0)
                         {
-                            foreach(string variable in variables)
+                            foreach(string variable in dependedCellVariables)
                             {
                                 if (cellNodes.ContainsKey(variable))
                                 {
@@ -103,17 +106,17 @@ namespace Domain.Base
                                 }
                                 else
                                 {
-                                    Node newNode = _parser.Parse(dependedByCells[variable].Value);
+                                    Node newNode = _parser.Parse(dependedCells[variable].Value);
                                     cellNodes.Add(variable, newNode);
                                     dependedCellNode = dependedCellNode.ReplaceVariable(variable, newNode);                        
                                 }                    
                             }
-                        }
-                    }
 
-                    newCell.DependedCells = await _dbContext.CellDependencies
-                        .Where(c => c.DependedByCell.Equals(newCell))
-                        .ToListAsync(cancellationToken);
+                            dependedCellVariables = dependedCellNode.GetNodeVariables();
+                        }
+
+                        _ = dependedCellNode.Evaluate();
+                    }
 
                     _dbContext.Cells.Update(newCell);
                     _dbContext.SaveChanges();
@@ -122,7 +125,7 @@ namespace Domain.Base
                 return new() 
                 {
                     Name = newCell.CellId,
-                    Value = newCell.Value,
+                    Value = $"={newCell.Value}",
                     Result = newCellResult,
                     IsValid = true
                 };
@@ -132,7 +135,7 @@ namespace Domain.Base
                 return new() 
                 {
                     Name = newCell.CellId,
-                    Value = newCell.Value,
+                    Value = $"{(newCell.IsExpression ? "=" : "")}{newCell.Value}",
                     Result = "ERROR",
                     IsValid = false
                 };

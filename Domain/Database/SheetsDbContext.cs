@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -56,8 +57,7 @@ namespace Domain.Database
                 filters.Add($"depended_cell_id = '{cellId}'");
             }
 
-            return CellDependencies.FromSqlRaw(
-                @$"WITH RECURSIVE starting AS
+            string asd = @$"WITH RECURSIVE starting AS
                 (
                     SELECT sheet_id, depended_cell_id, depended_by_cell_id
                     FROM public.cell_dependencies
@@ -69,7 +69,11 @@ namespace Domain.Database
                 )
                 SELECT DISTINCT *
                 FROM starting
-                "); 
+                ";
+            
+            Console.WriteLine(asd);
+
+            return CellDependencies.FromSqlRaw(asd); 
         }
 
         public IQueryable<CellDependency> GetAllDependedBy(string sheetId, string dependedByCellId)  
@@ -83,7 +87,7 @@ namespace Domain.Database
                 UNION ALL
                     SELECT p.sheet_id, p.depended_cell_id, p.depended_by_cell_id
                     FROM starting AS s
-                    JOIN public.cell_dependencies AS p ON s.depended_cell_id = p.depended_by_cell_id
+                    JOIN public.cell_dependencies AS p ON s.depended_cell_id = p.depended_by_cell_id AND p.sheet_id = '{sheetId}'
                 )
                 SELECT DISTINCT *
                 FROM starting
