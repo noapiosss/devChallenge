@@ -42,7 +42,7 @@ namespace Domain.Helpers
             {
                 char operation = _expression[_index++];
                 Node right = ParseTerm();
-                left = new OperationNode(new ValueNode(left.Evaluate()), right, operation);
+                left = new OperationNode(left, right, operation);
             }
 
             return left;
