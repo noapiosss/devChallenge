@@ -13,7 +13,7 @@ namespace Contracts.CalculationTree
 
         public override string Evaluate()
         {
-            return _value; 
+            return string.IsNullOrEmpty(_value) ? "0" : _value; 
         }
 
         public override ICollection<string> GetNodeVariables()

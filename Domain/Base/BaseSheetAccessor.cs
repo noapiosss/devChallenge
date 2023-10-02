@@ -32,8 +32,8 @@ namespace Domain.Base
         {
             try
             {
-                Node newCellNode = _parser.Parse(newCell.Value);
-                ICollection<string> newCellNodeVariables = newCellNode.GetNodeVariables();
+                Node newCellNode = new ValueNode(null);
+                ICollection<string> newCellNodeVariables;
                 Dictionary<string, Node> cellNodes = new();
                 Dictionary<string, Cell> dependedByCells;                
                 Dictionary<string, Cell> dependedCells = await _dbContext
@@ -44,6 +44,9 @@ namespace Domain.Base
 
                 if (newCell.IsExpression)
                 {
+                    newCellNode =  _parser.Parse(newCell.Value);
+                    newCellNodeVariables = newCellNode.GetNodeVariables();
+
                     dependedByCells = newCellNodeVariables.Count == 0 ?
                         new() :
                         await _dbContext
@@ -93,7 +96,10 @@ namespace Domain.Base
                             })
                         .ToList();
 
-                    cellNodes.Add(newCell.CellId, newCellNode);                    
+                    if (!cellNodes.TryAdd(newCell.CellId, newCellNode))
+                    {
+                        throw new InvalidOperationException("Cyclic dependence is not allowed");
+                    }                    
                 }
                 else
                 {
