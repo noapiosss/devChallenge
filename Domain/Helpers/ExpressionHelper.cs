@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using System.Text;
 
 namespace Domain.Helpers
@@ -41,6 +43,12 @@ namespace Domain.Helpers
                 }
 
                 expression = sb.ToString();
+            }
+
+            if (expression.Contains("()") ||
+                expression.Count(c => c == '(') != expression.Count(c => c == ')'))
+            {
+                throw new InvalidOperationException("Count of ( and ) are different or () present");
             }
 
             return expression.ToLower();
