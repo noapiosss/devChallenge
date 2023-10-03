@@ -1,25 +1,18 @@
-using System;
 using System.Net.Http;
 using System.Net.Http.Json;
 using Contracts.Http;
 using E2E.Data;
+using E2E.Tests.Base;
 using Shouldly;
+using Xunit.Abstractions;
 
-namespace E2E
+namespace E2E.Tests
 {
-    public class CellIdNamingTest
+    public class CellIdNamingTest : BaseTest
     {
-        private readonly HttpClient _client;
-        private readonly Random _random;
-
-        public CellIdNamingTest()
+        public CellIdNamingTest(ITestOutputHelper output) : base(output)
         {
-            _client = new()
-            {
-                BaseAddress = new Uri("http://localhost:8080")
-            };
 
-            _random = new();
         }
 
         [Fact]
@@ -30,7 +23,7 @@ namespace E2E
             string cellId = $"{_random.Next(10)}cell";
 
             // Act
-            UpsertCellRequest request = new() { Value = "expression"};
+            UpsertCellRequest request = new() { Value = "expression" };
             HttpResponseMessage response = await _client.PostAsJsonAsync($"/api/v1/{sheetId}/{cellId}", request);
             ErrorResponse result = await response.Content.ReadFromJsonAsync<ErrorResponse>();
 
@@ -49,7 +42,7 @@ namespace E2E
             string cellId = $"cell{sign}llec";
 
             // Act
-            UpsertCellRequest request = new() { Value = "expression"};
+            UpsertCellRequest request = new() { Value = "expression" };
             HttpResponseMessage response = await _client.PostAsJsonAsync($"/api/v1/{sheetId}/{cellId}", request);
             ErrorResponse result = await response.Content.ReadFromJsonAsync<ErrorResponse>();
 
