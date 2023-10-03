@@ -1,0 +1,47 @@
+version: "3.9"
+networks:
+  dev-challenge:
+    driver: bridge
+
+services:
+  api:
+    image: aspnet-image
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"      
+    networks:
+      - dev-challenge
+    depends_on:
+      - db
+    environment:
+      APP__ConnectionString: Uid=postgres;Pwd=123456;Server=postgres;Port=5432;Database=sheets;
+
+  db:    
+    container_name: postgres
+    image: postgres
+    environment:
+      POSTGRES_DB: sheets
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5432:5432"
+    volumes:
+      - app_data:/var/lib/psotgresql/data
+    networks:
+      - dev-challenge
+
+  test:
+    image: test  
+    build:
+      context: .
+      dockerfile: ./E2E/Dockerfile
+    depends_on:
+      - api    
+    networks:
+      - dev-challenge
+    command: ["dotnet", "test"] # Replace with the actual command to run your end-to-end tests
+
+volumes:
+  app_data:
