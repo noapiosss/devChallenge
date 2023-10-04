@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Numerics;
 
@@ -26,17 +27,17 @@ namespace Contracts.CalculationTree
             switch (_operation)
             {
                 case '+':
-                    return (float.Parse(leftValue) + float.Parse(rightValue)).ToString();
+                    return (float.Parse(leftValue, CultureInfo.InvariantCulture) + float.Parse(rightValue, CultureInfo.InvariantCulture)).ToString();
                 case '-':
-                    return (float.Parse(leftValue) - float.Parse(rightValue)).ToString();
+                    return (float.Parse(leftValue, CultureInfo.InvariantCulture) - float.Parse(rightValue, CultureInfo.InvariantCulture)).ToString();
                 case '*':
-                    return (float.Parse(leftValue) * float.Parse(rightValue)).ToString();
+                    return (float.Parse(leftValue, CultureInfo.InvariantCulture) * float.Parse(rightValue, CultureInfo.InvariantCulture)).ToString();
                 case '/':
                     if (rightValue == "0")
                     {
                         throw new DivideByZeroException("Division by zero.");
                     }
-                    return (float.Parse(leftValue) / float.Parse(rightValue)).ToString();;
+                    return (float.Parse(leftValue, CultureInfo.InvariantCulture) / float.Parse(rightValue, CultureInfo.InvariantCulture)).ToString();;
                 default:
                     throw new InvalidOperationException("Invalid operation.");
             }

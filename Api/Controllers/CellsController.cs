@@ -16,7 +16,7 @@ namespace Api.Controllers
     public class FiltersController : BaseController
     {
         private readonly IMediator _mediator;
-        private readonly char[] _invalidCellIdSigns = new char[] {' ', '+','-','/','*','=','(',')', ','};
+        private readonly char[] _invalidCellIdSigns = new char[] {' ', '+','-','/','*','=','(',')', ',', '.'};
 
         public FiltersController(IMediator mediator,
             ILogger<FiltersController> logger) : base(logger)
