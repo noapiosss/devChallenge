@@ -90,7 +90,7 @@ namespace Domain.Database
                     SELECT DISTINCT *
                     FROM starting"
                 )
-                .Select(cd => cd.DependedCell); 
+                .Select(cd => cd.DependedCell);
         }
     }
 }

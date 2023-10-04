@@ -27,17 +27,17 @@ namespace Contracts.CalculationTree
             switch (_operation)
             {
                 case '+':
-                    return (float.Parse(leftValue, CultureInfo.InvariantCulture) + float.Parse(rightValue, CultureInfo.InvariantCulture)).ToString();
+                    return (float.Parse(leftValue, CultureInfo.InvariantCulture) + float.Parse(rightValue, CultureInfo.InvariantCulture)).ToString(CultureInfo.InvariantCulture);
                 case '-':
-                    return (float.Parse(leftValue, CultureInfo.InvariantCulture) - float.Parse(rightValue, CultureInfo.InvariantCulture)).ToString();
+                    return (float.Parse(leftValue, CultureInfo.InvariantCulture) - float.Parse(rightValue, CultureInfo.InvariantCulture)).ToString(CultureInfo.InvariantCulture);
                 case '*':
-                    return (float.Parse(leftValue, CultureInfo.InvariantCulture) * float.Parse(rightValue, CultureInfo.InvariantCulture)).ToString();
+                    return (float.Parse(leftValue, CultureInfo.InvariantCulture) * float.Parse(rightValue, CultureInfo.InvariantCulture)).ToString(CultureInfo.InvariantCulture);
                 case '/':
                     if (rightValue == "0")
                     {
                         throw new DivideByZeroException("Division by zero.");
                     }
-                    return (float.Parse(leftValue, CultureInfo.InvariantCulture) / float.Parse(rightValue, CultureInfo.InvariantCulture)).ToString();;
+                    return (float.Parse(leftValue, CultureInfo.InvariantCulture) / float.Parse(rightValue, CultureInfo.InvariantCulture)).ToString(CultureInfo.InvariantCulture);
                 default:
                     throw new InvalidOperationException("Invalid operation.");
             }

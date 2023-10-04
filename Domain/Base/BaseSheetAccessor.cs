@@ -107,6 +107,11 @@ namespace Domain.Base
                     newCell.DependByCells = new List<CellDependency>();
                 }
 
+                if (dependedCells.Count != 0)
+                {
+                    dependedCells.Add(newCell.CellId, newCell);
+                }
+
                 foreach(KeyValuePair<string, Cell> dependedCell in dependedCells)
                 {
                     Node dependedCellNode = _parser.Parse(dependedCell.Value.Value);
@@ -128,8 +133,8 @@ namespace Domain.Base
                                     newNode = new ValueNode(dependedCells[variable].Value);
                                     cellNodes.Add(variable, newNode);
                                     newCellNode = newCellNode.ReplaceVariable(variable, newNode);
-                                    dependedCellVariables = new List<string>();
-                                    break;
+                                    dependedCellVariables =  dependedCellVariables.Except(new List<string>() {variable}).ToList();
+                                    continue;
                                 }
 
                                 newNode = _parser.Parse(dependedCells[variable].Value);
@@ -210,8 +215,8 @@ namespace Domain.Base
                         {
                             newNode = new ValueNode(dependedByCells[variable].Value);
                             cellNode = cellNode.ReplaceVariable(variable, newNode);
-                            variables = new List<string>();
-                            break;
+                            variables = variables.Except(new List<string>() {variable}).ToList();
+                            continue;
                         }
                             
                         newNode = _parser.Parse(dependedByCells[variable].Value);

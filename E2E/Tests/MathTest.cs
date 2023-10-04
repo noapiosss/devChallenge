@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Net.Http;
 using System.Net.Http.Json;
 using Contracts.Http;
@@ -23,7 +24,7 @@ namespace E2E.Tests
         {
             // Arrange
             string sheetId = $"sheet{_random.Next(1000000, 9999999)}";
-            double delta = 0.01;
+            float delta = 0.01f;
 
             foreach (CellDataWithStatusCode cell in cells)
             {
@@ -33,12 +34,9 @@ namespace E2E.Tests
                 GetCellResponse result = await response.Content.ReadFromJsonAsync<GetCellResponse>();
 
                 // Assert
-                LogCell(cell);
-                LogCell(cell.CellId, result.Value, result.Result, response.StatusCode);
-
                 response.StatusCode.ShouldBe(cell.StatusCode);
                 result.Value.ShouldBe(cell.Value);
-                Math.Abs(double.Parse(result.Result) - double.Parse(cell.Result)).ShouldBeLessThan(delta);
+                Math.Abs(float.Parse(result.Result, CultureInfo.InvariantCulture.NumberFormat) - float.Parse(cell.Result, CultureInfo.InvariantCulture.NumberFormat)).ShouldBeLessThan(delta);
             }
 
         }
