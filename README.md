@@ -34,8 +34,17 @@ with body
 
 ```sheet_id``` - no restrictions. <br />
 ```cell_id``` - any not empty string, which do not starts with a digit, and can not contains next symbols ```' '```, ```'+'```,```'-'```,```'/'```,```'*'```,```'='```,```'('```,```')'```, ```','```, ```'.'```. <br />
-```cell_value``` - any string (empty too), or math expression wich start with ```'='```, available operations is ```+, -, *, /``` and ```( )```, decimal parart of number should be separated by ```.```
-A cell can be dependent on another one, and the max deep of recursive dependencies is ~3600.
+```cell_value``` - any string (empty too), or math expression wich start with ```'='```, available operations is ```+, -, *, /``` and ```( )```, decimal parart of number should be separated by ```'.'```.
+A cell can be dependent on another one, and the max deep of recursive dependencies is ~3600.<br />
+For example:<br/>
+
+1. "var1"; "1"
+2. "var2": "=var1+1"
+3. "var3": "=var2+1"
+4. ...
+
+All calculations are limited by bounds 1.1E-38 to 3.4E+38.
+You can
 
 ### Responses
 
