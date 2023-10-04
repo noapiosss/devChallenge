@@ -7,8 +7,8 @@ RUN dotnet restore "Api/Api.csproj"
 COPY . .
 
 WORKDIR "/src/Api"
-RUN dotnet build "Api.csproj" -c Release -o /app/build
-RUN dotnet publish "Api.csproj" -c Release -o /app/publish
+RUN dotnet build "Api.csproj" --no-restore -c Release
+RUN dotnet publish "Api.csproj" --no-build -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS final
 WORKDIR /app

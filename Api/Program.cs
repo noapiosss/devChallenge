@@ -18,7 +18,14 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // builder.Services.Configure<AppConfiguration>(builder.Configuration);
-builder.Services.Configure<AppConfiguration>(builder.Configuration.GetSection("APP"));
+if (builder.Environment.IsDevelopment())
+{    
+    builder.Services.Configure<AppConfiguration>(builder.Configuration);
+}
+else if (builder.Environment.IsProduction())
+{    
+    builder.Services.Configure<AppConfiguration>(builder.Configuration.GetSection("APP"));
+}
 
 builder.Services.AddDomainServices((sp, options) =>
 {

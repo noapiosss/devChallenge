@@ -6,6 +6,6 @@ RUN dotnet restore "E2E/E2E.csproj"
 COPY . .
 
 WORKDIR "/src/E2E"
-RUN dotnet build "E2E.csproj"  -c Release -o /app/build
+RUN dotnet build "E2E.csproj" --no-restore
 
 CMD ["dotnet", "test", "--no-build"]
