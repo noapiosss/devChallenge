@@ -42,6 +42,17 @@ namespace Domain.Helpers
             {
                 char operation = _expression[_index++];
                 Node right = ParseTerm();
+
+                if (right.GetNodeVariables().Count == 0)
+                {
+                    right = new ValueNode(right.Evaluate());
+                }
+
+                if (left.GetNodeVariables().Count == 0)
+                {
+                    left = new ValueNode(left.Evaluate());
+                }
+
                 left = new OperationNode(left, right, operation);   
             }
 
@@ -57,6 +68,17 @@ namespace Domain.Helpers
             {
                 char operation = _expression[_index++];
                 Node right = ParseFactor();
+
+                if (right.GetNodeVariables().Count == 0)
+                {
+                    right = new ValueNode(right.Evaluate());
+                }
+
+                if (left.GetNodeVariables().Count == 0)
+                {
+                    left = new ValueNode(left.Evaluate());
+                }
+                
                 left = new OperationNode(left, right, operation);
             }
 
