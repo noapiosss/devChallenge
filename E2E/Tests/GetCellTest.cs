@@ -63,6 +63,17 @@ namespace E2E.Tests
             await GetCellsAsync(sheetId, cells[1]);
         }
 
+        [Theory]
+        [ClassData(typeof(ValidCellsWithRecuresionWithInvalidUpdateAtBegining))]
+        public async void ValidCellsWithRecuresionWithInvalidUpdateAtBegining(params List<CellDataWithStatusCode>[] cells)
+        {
+            // Arrange
+            string sheetId = $"sheet{_random.Next(1000000, 9999999)}";
+
+            await UpsertCellsAsync(sheetId, cells[0]);
+            await GetCellsAsync(sheetId, cells[1]);
+        }
+
         private async Task UpsertCellsAsync(string sheetId, List<CellDataWithStatusCode> cells)
         {
             for (int i = 0; i < cells.Count; ++i)
