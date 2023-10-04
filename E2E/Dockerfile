@@ -6,4 +6,9 @@ COPY . .
 
 WORKDIR "/src/E2E"
 RUN dotnet build "E2E.csproj" -c Release -o /app/build
+
+ARG API_URL
+RUN echo ${API_URL}
+ENV API_URL=${API_URL}
+
 RUN dotnet test

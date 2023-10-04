@@ -5,7 +5,8 @@ networks:
 
 services:
   api:
-    image: aspnet-image
+    container_name: api
+    image: api
     build:
       context: .
       dockerfile: Dockerfile
@@ -28,20 +29,23 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - app_data:/var/lib/psotgresql/data
+      - app_data:/var/lib/postgresql/data
     networks:
       - dev-challenge
 
   test:
-    image: test  
+    image: test      
     build:
       context: .
-      dockerfile: ./E2E/Dockerfile
+      dockerfile: ./E2E/Dockerfile      
+      args:
+        API_URL: http://host.docker.internal:8080
     depends_on:
       - api    
     networks:
       - dev-challenge
-    command: ["dotnet", "test"] # Replace with the actual command to run your end-to-end tests
+    command: ["dotnet", "test"]
+
 
 volumes:
   app_data:

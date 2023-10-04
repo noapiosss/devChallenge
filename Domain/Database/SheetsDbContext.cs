@@ -41,7 +41,7 @@ namespace Domain.Database
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            //_ = optionsBuilder.UseNpgsql("Uid=postgres;Pwd=123456;Server=postgres;Port=5432;Database=sheets;");
+            // _ = optionsBuilder.UseNpgsql("Uid=postgres;Pwd=123456;Server=postgres;Port=5432;Database=sheets;");
             // _ = optionsBuilder.UseNpgsql("Uid=postgres;Pwd=fyfnjksq123;Host=localhost:5432;Database=sheets;");
         }
 

@@ -19,8 +19,7 @@ namespace E2E.Tests.Base
         {
             _client = new()
             {
-                BaseAddress = new Uri("http://host.docker.internal:8080")
-                //BaseAddress = new Uri("http://localhost:8080")
+                BaseAddress = new Uri(Environment.GetEnvironmentVariable("API_URL") ?? "http://localhost:8080")
             };
 
             _random = new();

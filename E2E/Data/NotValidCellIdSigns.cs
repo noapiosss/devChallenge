@@ -14,6 +14,7 @@ namespace E2E.Data
             new object[] {'='},
             new object[] {'('},
             new object[] {')'},
+            new object[] {'.'},
             new object[] {','}
         };
 
