@@ -17,6 +17,7 @@ namespace Api.Controllers
     {
         private readonly IMediator _mediator;
         private readonly char[] _invalidCellIdSigns = new char[] {' ', '+','-','/','*','=','(',')', ',', '.'};
+        private readonly string[] _reserverdWords = new string[] {"sum", "avg", "min", "max"};
 
         public FiltersController(IMediator mediator,
             ILogger<FiltersController> logger) : base(logger)
@@ -135,12 +136,56 @@ namespace Api.Controllers
             }, cancellationToken);
         }
 
+        [HttpPost("/api/v1/{sheetId}/{cellId}/subscribe")]
+        public Task<IActionResult> Subscribe([FromRoute] string sheetId, string cellId, [FromBody] SubscribeRequest request, CancellationToken cancellationToken)
+        {
+            return SafeExecute(async () =>
+            {
+                CellExistsQuery query = new()
+                {
+                    SheetId = sheetId,
+                    CellId = cellId
+                };
+                
+                CellExistsQueryResult result = await _mediator.Send(query, cancellationToken);
+
+                if (!result.CellExists)
+                {
+                    return ToActionResult(new()
+                    {
+                        Code = ErrorCode.CellNotFound,
+                        Message = "Cell not found"
+                    });
+                }
+
+                // create event 
+                // subscribe on event
+
+                SubscribeResponse response = new()
+                {
+                    Webhook_url = request.Webhook_url
+                };
+
+                return Created("", response);
+
+            }, cancellationToken);
+        }
+
         private bool IsValidCellId(string cellId, out string message)
         {
             if (char.IsDigit(cellId[0]))
             {
                 message = $"CellId cannot starts with a number";
                 return false;
+            }
+
+            foreach (string reserverdWord in _reserverdWords)
+            {
+                if (cellId.ToLower() == reserverdWord)
+                {
+                    message = $"'{cellId}' is reserved word";
+                    return false;
+                }
             }
 
             foreach (char sign in _invalidCellIdSigns)
