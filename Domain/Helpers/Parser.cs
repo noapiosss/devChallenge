@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Contracts.CalculationTree;
 using Domain.Helpers.Interfaces;
@@ -156,13 +157,42 @@ namespace Domain.Helpers
 
             
             Parser argumentsParser = new();
-            foreach (string argument in _expression[(_index+1)..(endOfArguments-1)].Split(','))
+            foreach (string argument in GetFunctionArguments(_expression[_index..endOfArguments]))
             {
                 arguments.Add(await argumentsParser.ParseAsync(argument));
             }
 
             _index = endOfArguments;
             return arguments.ToArray();
+        }
+
+        private List<string> GetFunctionArguments(string l)
+        {
+            int startIdx = l.IndexOf("(") + 1;
+            int endIdx = l.LastIndexOf(")") - 1;
+            int count = 0;
+            int argIdx = startIdx;
+            List<string> args = new();
+
+            for (int i = startIdx; i < endIdx; i++)
+            {
+                if (l[i] == '(')
+                {
+                    count -= 1;
+                }
+                else if (l[i] == ')')
+                {
+                    count += 1;
+                }
+                else if (l[i] == ',' && count == 0)
+                {
+                    args.Add(l[argIdx..i]);
+                    argIdx = i + 1;
+                }
+            }
+
+            args.Add(l[argIdx..(endIdx+1)]);
+            return args;
         }
 
         private async Task<string> ParseReferenceArguments()
