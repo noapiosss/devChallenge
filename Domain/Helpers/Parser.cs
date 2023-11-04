@@ -1,16 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
+using System.Threading.Tasks;
 using Contracts.CalculationTree;
 using Domain.Helpers.Interfaces;
-using Npgsql.Internal.TypeHandlers.NumericHandlers;
 
 namespace Domain.Helpers
 {
     internal class Parser : IParser
     {
+        private static string[] _functions = new string[] { "sum", "avg", "min", "max"};
         private string _expression;
         private int _index;
 
@@ -19,14 +18,14 @@ namespace Domain.Helpers
 
         }
 
-        public Node Parse(string expression)
+        public async Task<Node> ParseAsync(string expression)
         {
             _expression = expression.PrepareExpression();
             _index = 0;
-            return ParseExpression();
+            return await ParseExpression();
         }
 
-        private Node ParseExpression()
+        private async Task<Node> ParseExpression()
         {
             bool isNegative = false;
             while (_index < _expression.Length && _expression[_index] == '-')
@@ -35,7 +34,7 @@ namespace Domain.Helpers
                 _index++;
             }
 
-            Node left = ParseTerm();
+            Node left = await ParseTerm();
 
             if (isNegative)
             {
@@ -46,16 +45,16 @@ namespace Domain.Helpers
                 (_expression[_index] == '+' || _expression[_index] == '-'))
             {
                 char operation = _expression[_index++];
-                Node right = ParseTerm();
+                Node right = await ParseTerm();
 
                 if (right.GetNodeVariables().Count == 0)
                 {
-                    right = new ValueNode(right.Evaluate());
+                    right = new ValueNode(await right.Evaluate());
                 }
 
                 if (left.GetNodeVariables().Count == 0)
                 {
-                    left = new ValueNode(left.Evaluate());
+                    left = new ValueNode(await left.Evaluate());
                 }
 
                 left = new OperationNode(left, right, operation);   
@@ -64,24 +63,24 @@ namespace Domain.Helpers
             return left;
         }
 
-        private Node ParseTerm()
+        private async Task<Node> ParseTerm()
         {
-            Node left = ParseFactor();
+            Node left = await ParseFactor();
 
             while (_index < _expression.Length &&
                 (_expression[_index] == '*' || _expression[_index] == '/'))
             {
                 char operation = _expression[_index++];
-                Node right = ParseFactor();
+                Node right = await ParseFactor();
 
                 if (right.GetNodeVariables().Count == 0)
                 {
-                    right = new ValueNode(right.Evaluate());
+                    right = new ValueNode(await right.Evaluate());
                 }
 
                 if (left.GetNodeVariables().Count == 0)
                 {
-                    left = new ValueNode(left.Evaluate());
+                    left = new ValueNode(await left.Evaluate());
                 }
                 
                 left = new OperationNode(left, right, operation);
@@ -90,12 +89,12 @@ namespace Domain.Helpers
             return left;
         }
 
-        private Node ParseFactor()
+        private async Task<Node> ParseFactor()
         {
             if (_index < _expression.Length && _expression[_index] == '(')
             {
                 _index++;
-                Node node = ParseExpression();
+                Node node = await ParseExpression();
                 
                 if (_index >= _expression.Length || _expression[_index] != ')')
                 {
@@ -109,7 +108,7 @@ namespace Domain.Helpers
             if (_expression[_index] == '+' || _expression[_index] == '-')
             {
                 char opration = _expression[_index++];
-                Node right = ParseFactor();
+                Node right = await ParseFactor();
                 return new OperationNode(new ValueNode("0"), right, opration);
             }
             else if (char.IsDigit(_expression[_index]) || char.IsLetter(_expression[_index]))
@@ -130,7 +129,11 @@ namespace Domain.Helpers
 
                 if (IsFunction(numberStr))
                 {
-                    return new FunctionNode(ParseFunctionArguments(), numberStr);
+                    return new FunctionNode(await ParseFunctionArguments(), numberStr);
+                }
+                else if (numberStr == "external_ref")
+                {
+                    return new ReferenceNode(await ParseReferenceArguments());
                 }
 
                 return new ValueNode(numberStr);
@@ -141,7 +144,7 @@ namespace Domain.Helpers
             }
         }
 
-        private Node[] ParseFunctionArguments()
+        private async Task<Node[]> ParseFunctionArguments()
         {
             if (_expression[_index] != '(')
             {
@@ -155,11 +158,25 @@ namespace Domain.Helpers
             Parser argumentsParser = new();
             foreach (string argument in _expression[(_index+1)..(endOfArguments-1)].Split(','))
             {
-                arguments.Add(argumentsParser.Parse(argument));
+                arguments.Add(await argumentsParser.ParseAsync(argument));
             }
 
             _index = endOfArguments;
             return arguments.ToArray();
+        }
+
+        private async Task<string> ParseReferenceArguments()
+        {
+            if (_expression[_index] != '(')
+            {
+                throw new InvalidOperationException("Mismatched parentheses");
+            }
+
+            int endOfArguments = EndOfArguments();
+            string link = _expression[(_index+1)..(endOfArguments-1)];
+            _index = endOfArguments;
+
+            return link;
         }
 
         private int EndOfArguments()
@@ -189,7 +206,7 @@ namespace Domain.Helpers
 
         private bool IsFunction(string str)
         {
-            return str == "sum" || str == "avg" || str == "min" || str == "max";
+            return _functions.Contains(str);
         }
     }
 }

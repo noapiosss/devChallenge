@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Contracts.CalculationTree
 {
@@ -11,7 +12,7 @@ namespace Contracts.CalculationTree
             _value = value;
         }
 
-        public override string Evaluate()
+        public override async Task<string> Evaluate()
         {
             return string.IsNullOrEmpty(_value) ? "0" : _value; 
         }

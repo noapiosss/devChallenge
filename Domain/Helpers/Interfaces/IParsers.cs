@@ -1,9 +1,10 @@
+using System.Threading.Tasks;
 using Contracts.CalculationTree;
 
 namespace Domain.Helpers.Interfaces
 {
     public interface IParser
     {
-        public Node Parse(string expresssion);
+        public Task<Node> ParseAsync(string expresssion);
     }
 }

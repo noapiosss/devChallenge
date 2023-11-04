@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net.Http;
 using System.Numerics;
+using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace Contracts.CalculationTree
 {
@@ -17,13 +20,13 @@ namespace Contracts.CalculationTree
             _function = function;
         }
 
-        public override string Evaluate()
+        public override async Task<string> Evaluate()
         {
             string[] argumentValues = new string[_arguments.Length];
 
             for (int i = 0; i < _arguments.Length; ++i)
             {
-                argumentValues[i] = _arguments[i].Evaluate();
+                argumentValues[i] = await _arguments[i].Evaluate();
             }
 
             switch (_function)
@@ -33,9 +36,11 @@ namespace Contracts.CalculationTree
                 case "avg":
                     return Avg(argumentValues);
                 case "min":
-                    return Min(argumentValues);;
+                    return Min(argumentValues);
                 case "max":
-                    return Max(argumentValues);;
+                    return Max(argumentValues);
+                case "external_url":
+                    return await ExternalUrl(argumentValues);
                 default:
                     throw new InvalidOperationException("Invalid function.");
             }
@@ -88,6 +93,23 @@ namespace Contracts.CalculationTree
             }
 
             return result.ToString(CultureInfo.InvariantCulture);
+        }
+
+        private async Task<string> ExternalUrl(string[] argumentValues)
+        {
+            if (argumentValues.Length > 1)
+            {
+                throw new InvalidOperationException("Invalid arguments.");
+            }
+
+            using HttpClient client = new()
+            {
+                BaseAddress = new Uri(argumentValues[0])
+            };
+
+            HttpResponseMessage response = await client.GetAsync("");
+            JObject responseObject = JObject.Parse(await response.Content.ReadAsStringAsync());
+            return responseObject.SelectToken("result").ToString();
         }
 
         public override ICollection<string> GetNodeVariables()

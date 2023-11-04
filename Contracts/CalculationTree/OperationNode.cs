@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Numerics;
+using System.Threading.Tasks;
 
 namespace Contracts.CalculationTree
 {
@@ -19,10 +18,10 @@ namespace Contracts.CalculationTree
             _operation = operation;
         }
 
-        public override string Evaluate()
+        public override async Task<string> Evaluate()
         {
-            string leftValue = _left.Evaluate();
-            string rightValue = _right.Evaluate();
+            string leftValue = await _left.Evaluate();
+            string rightValue = await _right.Evaluate();
 
             switch (_operation)
             {

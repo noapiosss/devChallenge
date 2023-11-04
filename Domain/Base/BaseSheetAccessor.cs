@@ -48,7 +48,7 @@ namespace Domain.Base
 
                 if (newCell.IsExpression)
                 {
-                    newCellNode =  _parser.Parse(newCell.Value);
+                    newCellNode = await _parser.ParseAsync(newCell.Value);
                     newCellNodeVariables = newCellNode.GetNodeVariables();
 
                     dependedByCells = newCellNodeVariables.Count == 0 ?
@@ -78,7 +78,7 @@ namespace Domain.Base
                                     continue;
                                 }
                                     
-                                newNode = _parser.Parse(dependedByCells[variable].Value);
+                                newNode = await _parser.ParseAsync(dependedByCells[variable].Value);
                                 cellNodes.Add(variable, newNode);
                                 newCellNode = newCellNode.ReplaceVariable(variable, newNode);                                
                             }
@@ -87,7 +87,7 @@ namespace Domain.Base
                         }
                     }
 
-                    newCellResult = newCellNode.Evaluate();
+                    newCellResult = await newCellNode.Evaluate();
                     
                     newCell.DependByCells = dependedByCells
                         .Where(c => newCellNodeVariables.Contains(c.Key))
@@ -120,7 +120,7 @@ namespace Domain.Base
 
                 foreach(KeyValuePair<string, Cell> dependedCell in dependedCells)
                 {
-                    Node dependedCellNode = _parser.Parse(dependedCell.Value.Value);
+                    Node dependedCellNode = await _parser.ParseAsync(dependedCell.Value.Value);
 
                     ICollection<string> dependedCellVariables = dependedCellNode.GetNodeVariables();
                     while (dependedCellVariables.Count != 0)
@@ -143,7 +143,7 @@ namespace Domain.Base
                                     continue;
                                 }
 
-                                newNode = _parser.Parse(dependedCells[variable].Value);
+                                newNode = await _parser.ParseAsync(dependedCells[variable].Value);
                                 cellNodes.Add(variable, newNode);
                                 dependedCellNode = dependedCellNode.ReplaceVariable(variable, newNode);
                             }
@@ -157,7 +157,7 @@ namespace Domain.Base
                         SheetId = dependedCell.Value.SheetId,
                         CellId = dependedCell.Value.CellId,
                         Value = $"{(dependedCell.Value.IsExpression ? "=" : "")}{dependedCell.Value.Value}",
-                        Result = dependedCellNode.Evaluate()
+                        Result = await dependedCellNode.Evaluate()
                     });
                 }
 
@@ -214,7 +214,7 @@ namespace Domain.Base
 
             Dictionary<string, Node> cellNodes = new();
 
-            Node cellNode = _parser.Parse(cell.Value);
+            Node cellNode = await _parser.ParseAsync(cell.Value);
 
             ICollection<string> variables = cellNode.GetNodeVariables();
             while (variables.Count != 0)
@@ -236,7 +236,7 @@ namespace Domain.Base
                             continue;
                         }
                             
-                        newNode = _parser.Parse(dependedByCells[variable].Value);
+                        newNode = await _parser.ParseAsync(dependedByCells[variable].Value);
                         cellNodes.Add(variable, newNode);
                         cellNode = cellNode.ReplaceVariable(variable, newNode);                                
                     }
@@ -249,7 +249,7 @@ namespace Domain.Base
             {
                 Name = cell.CellId,
                 Value = $"={cell.Value}",
-                Result = cellNode.Evaluate(),
+                Result = await cellNode.Evaluate(),
                 IsValid = true
             };
         }
@@ -278,7 +278,7 @@ namespace Domain.Base
                     continue;
                 }
 
-                Node cellNode = _parser.Parse(cell.Value.Value);
+                Node cellNode = await _parser.ParseAsync(cell.Value.Value);
 
                 ICollection<string> variables = cellNode.GetNodeVariables();
                 while (variables.Count != 0)
@@ -300,7 +300,7 @@ namespace Domain.Base
                                 continue;
                             }
                                 
-                            newNode = _parser.Parse(cells[variable].Value);
+                            newNode = await _parser.ParseAsync(cells[variable].Value);
                             cellNodes.Add(variable, newNode);
                             cellNode = cellNode.ReplaceVariable(variable, newNode);                                
                         }
@@ -313,7 +313,7 @@ namespace Domain.Base
                 {
                     Name = cell.Value.CellId,
                     Value = $"={cell.Value.Value}",
-                    Result = cellNode.Evaluate(),
+                    Result = await cellNode.Evaluate(),
                     IsValid = true
                 });
             }
