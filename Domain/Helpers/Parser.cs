@@ -1,6 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text;
 using Contracts.CalculationTree;
 using Domain.Helpers.Interfaces;
+using Npgsql.Internal.TypeHandlers.NumericHandlers;
 
 namespace Domain.Helpers
 {
@@ -107,7 +112,6 @@ namespace Domain.Helpers
                 Node right = ParseFactor();
                 return new OperationNode(new ValueNode("0"), right, opration);
             }
-
             else if (char.IsDigit(_expression[_index]) || char.IsLetter(_expression[_index]))
             {
                 int start_index = _index;
@@ -116,18 +120,76 @@ namespace Domain.Helpers
                     _expression[_index] != '-' &&
                     _expression[_index] != '*' &&
                     _expression[_index] != '/' &&
+                    _expression[_index] != '(' &&
                     _expression[_index] != ')')
                 {
                     _index++;
                 }
 
                 string numberStr = _expression[start_index.._index];
+
+                if (IsFunction(numberStr))
+                {
+                    return new FunctionNode(ParseFunctionArguments(), numberStr);
+                }
+
                 return new ValueNode(numberStr);
             }
             else
             {
                 throw new InvalidOperationException("Invalid character.");
             }
+        }
+
+        private Node[] ParseFunctionArguments()
+        {
+            if (_expression[_index] != '(')
+            {
+                throw new InvalidOperationException("Mismatched parentheses");
+            }
+
+            List<Node> arguments = new();
+            int endOfArguments = EndOfArguments();
+
+            
+            Parser argumentsParser = new();
+            foreach (string argument in _expression[(_index+1)..(endOfArguments-1)].Split(','))
+            {
+                arguments.Add(argumentsParser.Parse(argument));
+            }
+
+            _index = endOfArguments;
+            return arguments.ToArray();
+        }
+
+        private int EndOfArguments()
+        {
+            Stack<char> parentheses = new();
+            parentheses.Push('(');
+
+            int i = _index+1;
+            for (; i < _expression.Length && parentheses.TryPeek(out _); ++i)
+            {
+                if (_expression[i] == '(')
+                {
+                    parentheses.Push('(');
+                }
+
+                if(_expression[i] == ')')
+                {                    
+                    if (!parentheses.TryPop(out _))
+                    {
+                        throw new InvalidOperationException("Mismatched parentheses");
+                    }
+                }
+            }       
+
+            return i;  
+        }
+
+        private bool IsFunction(string str)
+        {
+            return str == "sum" || str == "avg" || str == "min" || str == "max";
         }
     }
 }

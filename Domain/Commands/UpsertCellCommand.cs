@@ -33,6 +33,7 @@ namespace Domain.Commands
         {
             request.Cell.SheetId = request.Cell.SheetId.ToLower();
             request.Cell.CellId = request.Cell.CellId.ToLower();
+            request.Cell.Value = request.Cell.Value.ToLower();
 
             return new()
             {
