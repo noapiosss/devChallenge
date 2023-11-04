@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Contracts.DTO;
 using Domain.Base;
 using Domain.Database;
+using Domain.Event;
 using Domain.Helpers.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -26,7 +27,8 @@ namespace Domain.Commands
     {
         public GetSheetQueryHandler(SheetsDbContext dbContext,
             IParser parser,
-            ILogger<GetSheetQueryHandler> logger) : base(dbContext, parser, logger)
+            CellChangedEvent cellChangedEvent,
+            ILogger<GetSheetQueryHandler> logger) : base(dbContext, parser, cellChangedEvent, logger)
         {
 
         }

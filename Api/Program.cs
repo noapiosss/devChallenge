@@ -1,4 +1,6 @@
 using Api.Configuration;
+using Api.Services;
+using Api.Services.Interfaces;
 using Domain;
 using Domain.Database;
 using Microsoft.AspNetCore.Builder;
@@ -32,6 +34,8 @@ builder.Services.AddDomainServices((sp, options) =>
     IOptionsMonitor<AppConfiguration> configuration = sp.GetRequiredService<IOptionsMonitor<AppConfiguration>>();
     _ = options.UseNpgsql(configuration.CurrentValue.ConnectionString);
 });
+
+builder.Services.AddSingleton<ICellNotificationHandler, CellNotificationHandler>();
 
 var app = builder.Build();
 

@@ -4,6 +4,7 @@ using Contracts.Database;
 using Contracts.DTO;
 using Domain.Base;
 using Domain.Database;
+using Domain.Event;
 using Domain.Helpers.Interfaces;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -24,7 +25,8 @@ namespace Domain.Commands
     {
         public UpsertCellCommandHandler(SheetsDbContext dbContext,
             IParser parser,
-            ILogger<UpsertCellCommandHandler> logger) : base(dbContext, parser, logger)
+            CellChangedEvent cellChangedEvent,
+            ILogger<UpsertCellCommandHandler> logger) : base(dbContext, parser, cellChangedEvent, logger)
         {
 
         }

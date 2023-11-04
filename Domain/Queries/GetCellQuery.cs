@@ -4,6 +4,7 @@ using Contracts.Database;
 using Contracts.DTO;
 using Domain.Base;
 using Domain.Database;
+using Domain.Event;
 using Domain.Helpers.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -27,7 +28,8 @@ namespace Domain.Commands
     {
         public GetCellQueryHandler(SheetsDbContext dbContext,
             IParser parser,
-            ILogger<GetCellQueryHandler> logger) : base(dbContext, parser, logger)
+            CellChangedEvent cellChangedEvent,
+            ILogger<GetCellQueryHandler> logger) : base(dbContext, parser, cellChangedEvent, logger)
         {
 
         }

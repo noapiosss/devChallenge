@@ -1,6 +1,7 @@
 using System;
 using Domain.Commands;
 using Domain.Database;
+using Domain.Event;
 using Domain.Helpers;
 using Domain.Helpers.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +16,8 @@ namespace Domain
         {
             return services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(UpsertCellCommand).Assembly))
                 .AddScoped<IParser, Parser>()
-                .AddDbContext<SheetsDbContext>(dbOptionsAction);
+                .AddDbContext<SheetsDbContext>(dbOptionsAction)
+                .AddSingleton<CellChangedEvent>();
         }
     }
 }

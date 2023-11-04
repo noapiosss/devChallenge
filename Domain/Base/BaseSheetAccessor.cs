@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using Domain.Helpers;
 using Domain.Helpers.Interfaces;
 using System;
+using Domain.Event;
 
 namespace Domain.Base
 {
@@ -19,11 +20,14 @@ namespace Domain.Base
     {
         protected readonly SheetsDbContext _dbContext;
         private readonly IParser _parser;
+        private readonly CellChangedEvent _cellChangedEvent;
 
         protected BaseSheetAccessor(SheetsDbContext dbContext,
             IParser parser,
+            CellChangedEvent cellChangedEvent,
             ILogger logger) : base(logger)
         {
+            _cellChangedEvent = cellChangedEvent;
             _dbContext = dbContext;
             _parser = parser;
         }
@@ -112,6 +116,8 @@ namespace Domain.Base
                     dependedCells.Add(newCell.CellId, newCell);
                 }
 
+                List<CellChangedEventArgs> changedCells = new();
+
                 foreach(KeyValuePair<string, Cell> dependedCell in dependedCells)
                 {
                     Node dependedCellNode = _parser.Parse(dependedCell.Value.Value);
@@ -146,7 +152,18 @@ namespace Domain.Base
                         dependedCellVariables = dependedCellNode.GetNodeVariables();
                     }
 
-                    _ = dependedCellNode.Evaluate();
+                    changedCells.Add(new()
+                    {
+                        SheetId = dependedCell.Value.SheetId,
+                        CellId = dependedCell.Value.CellId,
+                        Value = $"{(dependedCell.Value.IsExpression ? "=" : "")}{dependedCell.Value.Value}",
+                        Result = dependedCellNode.Evaluate()
+                    });
+                }
+
+                foreach (CellChangedEventArgs args in changedCells)
+                {
+                    _cellChangedEvent.RiseEvent(args);
                 }
 
                 if (!await _dbContext.Cells.AnyAsync(c => c.Equals(newCell), cancellationToken))

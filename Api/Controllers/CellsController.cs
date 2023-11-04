@@ -3,6 +3,8 @@ using System.Linq;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
+using Api.Services;
+using Api.Services.Interfaces;
 using Contracts.Database;
 using Contracts.DTO;
 using Contracts.Http;
@@ -16,13 +18,16 @@ namespace Api.Controllers
     public class FiltersController : BaseController
     {
         private readonly IMediator _mediator;
+        private readonly ICellNotificationHandler _notificationHandler;
         private readonly char[] _invalidCellIdSigns = new char[] {' ', '+','-','/','*','=','(',')', ',', '.'};
         private readonly string[] _reserverdWords = new string[] {"sum", "avg", "min", "max"};
 
         public FiltersController(IMediator mediator,
+            ICellNotificationHandler notificationHandler,
             ILogger<FiltersController> logger) : base(logger)
         {
             _mediator = mediator;
+            _notificationHandler = notificationHandler;
         }
 
         [HttpPost("/api/v1/{sheetId}/{cellId}")]
@@ -141,15 +146,15 @@ namespace Api.Controllers
         {
             return SafeExecute(async () =>
             {
-                CellExistsQuery query = new()
+                GetCellQuery query = new()
                 {
                     SheetId = sheetId,
                     CellId = cellId
                 };
                 
-                CellExistsQueryResult result = await _mediator.Send(query, cancellationToken);
+                GetCellQueryResult result = await _mediator.Send(query, cancellationToken);
 
-                if (!result.CellExists)
+                if (!result.IsFound)
                 {
                     return ToActionResult(new()
                     {
@@ -158,8 +163,7 @@ namespace Api.Controllers
                     });
                 }
 
-                // create event 
-                // subscribe on event
+                _notificationHandler.Subscribe(sheetId, cellId, result.CellDTO.Result, request.Webhook_url);
 
                 SubscribeResponse response = new()
                 {
