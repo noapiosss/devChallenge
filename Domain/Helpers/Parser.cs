@@ -134,7 +134,7 @@ namespace Domain.Helpers
                 }
                 else if (numberStr == "external_ref")
                 {
-                    return new ReferenceNode(await ParseReferenceArguments());
+                    return new ReferenceNode(ParseReferenceArguments());
                 }
 
                 return new ValueNode(numberStr);
@@ -166,7 +166,7 @@ namespace Domain.Helpers
             return arguments.ToArray();
         }
 
-        private List<string> GetFunctionArguments(string l)
+        private static List<string> GetFunctionArguments(string l)
         {
             int startIdx = l.IndexOf("(") + 1;
             int endIdx = l.LastIndexOf(")") - 1;
@@ -195,7 +195,7 @@ namespace Domain.Helpers
             return args;
         }
 
-        private async Task<string> ParseReferenceArguments()
+        private string ParseReferenceArguments()
         {
             if (_expression[_index] != '(')
             {
@@ -203,7 +203,7 @@ namespace Domain.Helpers
             }
 
             int endOfArguments = EndOfArguments();
-            string link = _expression[(_index+1)..(endOfArguments-1)];
+            string link = _expression[(_index + 1)..(endOfArguments - 1)];
             _index = endOfArguments;
 
             return link;
@@ -234,7 +234,7 @@ namespace Domain.Helpers
             return i;  
         }
 
-        private bool IsFunction(string str)
+        private static bool IsFunction(string str)
         {
             return _functions.Contains(str);
         }
