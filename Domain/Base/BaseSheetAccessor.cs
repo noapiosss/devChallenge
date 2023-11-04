@@ -27,9 +27,9 @@ namespace Domain.Base
             CellChangedEvent cellChangedEvent,
             ILogger logger) : base(logger)
         {
-            _cellChangedEvent = cellChangedEvent;
             _dbContext = dbContext;
-            _parser = parser;
+            _parser = parser;            
+            _cellChangedEvent = cellChangedEvent;
         }
 
         protected async Task<CellDTO> TryUpsertValueAsync(Cell newCell, CancellationToken cancellationToken)

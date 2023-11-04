@@ -34,7 +34,7 @@ with body
 
 ```sheet_id``` - no restrictions. <br />
 ```cell_id``` - any not empty string, which do not starts with a digit, and can not contains next symbols ```' '```, ```'+'```,```'-'```,```'/'```,```'*'```,```'='```,```'('```,```')'```, ```','```, ```'.'```. <br />
-```cell_value``` - any string (empty too), or math expression wich start with ```'='```, available operations is ```+, -, *, /``` and ```( )```, decimal parart of number should be separated by ```'.'```.
+```cell_value``` - any string (empty too), or math expression wich start with ```'='```, available operations is ```+, -, *, /``` and ```( )```, decimal parart of number should be separated by ```'.'```. Also availabe function ```sum(a, b, ...), avg(a, b, ...), min(a, b, ...), max(a, b, ...), external_ref(:url)```.
 A cell can be dependent on another one, and the max deep of recursive dependencies is ~3600.<br />
 For example:<br/>
 
@@ -104,3 +104,25 @@ You can
 ```
 
 404 - sheet not found
+
+## 4. ```GET /api/v1/:sheetId/:cellId/subscribe```
+
+### Responses
+
+with body
+
+```
+{
+    "weebhook_url": "{:webhook_url}"    
+}
+```
+
+201 - <br />
+
+```
+{
+    "weebhook_url": "{:webhook_url}"    
+}
+```
+
+404 - cell not found

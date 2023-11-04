@@ -11,7 +11,6 @@ namespace Api.Services.Interfaces
 {
     public interface ICellNotificationHandler
     {
-
         public void Subscribe(string sheetId, string cellId, string result, string webhook);
     }
 }
